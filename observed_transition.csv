@@ -1,0 +1,7 @@
+transition_id,person_id,education_record_id,employment_record_id,transition_type,months_to_employment,transition_status
+TR-9001,P-0001,ED-1001,EMP-7001,education_to_healthcare,6,matched
+TR-9002,P-0002,ED-1002,EMP-7002,education_to_manufacturing,5,matched
+TR-9003,P-0003,ED-1003,EMP-7003,education_to_professional_services,4,matched
+TR-9004,P-0004,ED-1004,EMP-7004,education_to_education,8,matched
+TR-9005,P-0005,ED-1005,EMP-7005,education_to_construction,7,matched
+TR-9006,P-0006,ED-1006,EMP-7006,education_to_information_technology,3,matched

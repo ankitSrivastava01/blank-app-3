@@ -1,0 +1,6 @@
+state,county,zip_prefix,region,public_population,geography_type
+CT,Hartford,061,Capitol Region,899498,urban
+CT,New Haven,065,South Central,864835,urban
+CT,Fairfield,069,Southwest,957419,urban
+CT,New London,063,Southeastern,268555,mixed
+CT,Middlesex,064,Lower Connecticut River Valley,164245,mixed

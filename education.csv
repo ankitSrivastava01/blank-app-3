@@ -1,0 +1,7 @@
+education_record_id,person_id,first_name,last_name,dob,phone,email,address,zip,student_id,cip_code,soc_code,program,graduation_year,completion_status
+ED-1001,P-0001,Avery,Johnson,1998-04-12,555-201-4101,avery.j@example.edu,114 Maple Street,06103,STU-440102,51.3801,29-1141,Nursing Certificate,2021,completed
+ED-1002,P-0002,Maya,Patel,1997-11-03,555-201-4102,maya.p@example.edu,77 Oak Avenue,06510,STU-440103,15.0613,51-4041,Advanced Manufacturing,2020,completed
+ED-1003,P-0003,Noah,Kim,1999-02-21,555-201-4103,noah.k@example.edu,802 River Road,06901,STU-440104,11.0101,15-2051,Data Analytics,2022,completed
+ED-1004,P-0004,Sophia,Rivera,1998-09-30,555-201-4104,sophia.r@example.edu,19 Pine Lane,06040,STU-440105,13.1210,25-2011,Early Childhood Education,2021,completed
+ED-1005,P-0005,Lucas,Brown,1996-06-14,555-201-4105,lucas.b@example.edu,441 Cedar Drive,06320,STU-440106,48.0508,51-4121,Welding,2019,completed
+ED-1006,P-0006,Olivia,Chen,2000-01-05,555-201-4106,olivia.c@example.edu,26 Elm Street,06457,STU-440107,11.1003,15-1212,Cybersecurity,2023,completed

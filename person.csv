@@ -1,0 +1,7 @@
+person_id,first_name,last_name,dob,phone,email,address,zip,county,state,student_id
+P-0001,Avery,Johnson,1998-04-12,555-201-4101,avery.j@example.edu,114 Maple Street,06103,Hartford,CT,STU-440102
+P-0002,Maya,Patel,1997-11-03,555-201-4102,maya.p@example.edu,77 Oak Avenue,06510,New Haven,CT,STU-440103
+P-0003,Noah,Kim,1999-02-21,555-201-4103,noah.k@example.edu,802 River Road,06901,Fairfield,CT,STU-440104
+P-0004,Sophia,Rivera,1998-09-30,555-201-4104,sophia.r@example.edu,19 Pine Lane,06040,Hartford,CT,STU-440105
+P-0005,Lucas,Brown,1996-06-14,555-201-4105,lucas.b@example.edu,441 Cedar Drive,06320,New London,CT,STU-440106
+P-0006,Olivia,Chen,2000-01-05,555-201-4106,olivia.c@example.edu,26 Elm Street,06457,Middlesex,CT,STU-440107

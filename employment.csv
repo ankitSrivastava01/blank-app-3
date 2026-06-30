@@ -1,0 +1,7 @@
+employment_record_id,person_id,workforce_record_id,quarter,soc_code,industry,county,state,employment_status
+EMP-7001,P-0001,WF-5001,2022Q4,29-1141,Healthcare,Hartford,CT,employed
+EMP-7002,P-0002,WF-5002,2021Q4,51-4041,Manufacturing,New Haven,CT,employed
+EMP-7003,P-0003,WF-5003,2023Q4,15-2051,Professional Services,Fairfield,CT,employed
+EMP-7004,P-0004,WF-5004,2022Q4,25-2011,Education,Hartford,CT,employed
+EMP-7005,P-0005,WF-5005,2020Q4,51-4121,Construction,New London,CT,employed
+EMP-7006,P-0006,WF-5006,2024Q2,15-1212,Information Technology,Middlesex,CT,employed

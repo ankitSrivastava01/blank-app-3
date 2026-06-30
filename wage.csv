@@ -1,0 +1,7 @@
+workforce_record_id,first_name,last_name,dob,phone,email,address,zip,ssn_last4,soc_code,industry,annual_wage
+WF-5001,Avery,Jonson,1998-04-12,555-201-4101,avery.work@example.com,114 Maple St,06103,1420,29-1141,Healthcare,61200
+WF-5002,Maya,Patel,1997-11-03,555-201-4102,maya.work@example.com,77 Oak Ave,06510,9042,51-4041,Manufacturing,54800
+WF-5003,Noah,Kim,1999-02-21,555-201-4103,noah.work@example.com,802 River Rd,06901,1188,15-2051,Professional Services,70400
+WF-5004,Sofia,Rivera,1998-09-30,555-201-4199,sofia.work@example.com,19 Pine Ln,06040,4481,25-2011,Education,39200
+WF-5005,Lucas,Browne,1996-06-14,555-201-4105,lucas.work@example.com,441 Cedar Dr,06320,2201,51-4121,Construction,58700
+WF-5006,Olivia,Chen,2000-01-05,555-201-4106,olivia.work@example.com,26 Elm Street,06457,9988,15-1212,Information Technology,74200
