@@ -1,0 +1,7 @@
+public_person_id,person_group_id,state,county,zip_prefix,soc_code,industry,year,education_level,labor_force_status,public_person_count
+PUB-P-001,PG-HARTFORD-061-HEALTH,CT,Hartford,061,29-1141,Healthcare,2024,Certificate,Employed,210
+PUB-P-002,PG-NEWHAVEN-065-MFG,CT,New Haven,065,51-4041,Manufacturing,2024,Certificate,Employed,145
+PUB-P-003,PG-FAIRFIELD-069-PROF,CT,Fairfield,069,15-2051,Professional Services,2024,Bachelor,Employed,98
+PUB-P-004,PG-HARTFORD-060-EDU,CT,Hartford,060,25-2011,Education,2024,Associate,Employed,132
+PUB-P-005,PG-NEWLONDON-063-CONST,CT,New London,063,51-4121,Construction,2024,Certificate,Employed,87
+PUB-P-006,PG-MIDDLESEX-064-IT,CT,Middlesex,064,15-1212,Information Technology,2024,Bachelor,Employed,76

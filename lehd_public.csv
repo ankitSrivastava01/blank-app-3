@@ -1,0 +1,7 @@
+state,county,zip_prefix,soc_code,naics_code,industry,quarter,year,public_jobs,public_hires,average_monthly_earnings
+CT,Hartford,061,29-1141,62,Healthcare,2024Q2,2024,18420,1420,6120
+CT,New Haven,065,51-4041,31-33,Manufacturing,2024Q2,2024,9650,740,4560
+CT,Fairfield,069,15-2051,54,Professional Services,2024Q2,2024,7210,580,7030
+CT,Hartford,060,25-2011,61,Education,2024Q2,2024,4380,310,3820
+CT,New London,063,51-4121,23,Construction,2024Q2,2024,3275,265,4920
+CT,Middlesex,064,15-1212,51,Information Technology,2024Q2,2024,2860,230,7350

@@ -1,0 +1,7 @@
+state,county,zip_prefix,soc_code,industry,year,education_level,labor_force_status,public_person_count,employment_rate,median_weekly_earnings
+CT,Hartford,061,29-1141,Healthcare,2024,Certificate,Employed,1280,0.89,1180
+CT,New Haven,065,51-4041,Manufacturing,2024,Certificate,Employed,760,0.84,1055
+CT,Fairfield,069,15-2051,Professional Services,2024,Bachelor,Employed,540,0.91,1460
+CT,Hartford,060,25-2011,Education,2024,Associate,Employed,830,0.76,820
+CT,New London,063,51-4121,Construction,2024,Certificate,Employed,620,0.82,1125
+CT,Middlesex,064,15-1212,Information Technology,2024,Bachelor,Employed,470,0.93,1525

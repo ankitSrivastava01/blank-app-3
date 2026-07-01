@@ -21,20 +21,28 @@ MOCK_DATA_FILES = {
     "employment": "employment.csv",
     "observed_transition": "observed_transition.csv",
     "geography": "geography.csv",
+    "public_person_geo": "public_person_geo.csv",
     "onet_skills": "onet_skills.csv",
+    "lehd_public": "lehd_public.csv",
+    "cps_public": "cps_public.csv",
     "program_stats": "program_stats.csv",
 }
-DIRECT_IDENTIFIERS = {"first_name", "last_name", "dob", "phone", "email", "address", "zip", "student_id", "ssn_last4"}
-GEO_FIELDS = {"state", "county", "zip", "zip_prefix", "region", "geography_type"}
+DIRECT_IDENTIFIERS = {"first_name", "last_name", "dob", "phone", "email", "address", "mailing_address", "zip", "student_id", "ssn_last4"}
+GEO_FIELDS = {"state", "county", "zip", "zip_prefix", "mail_zip_prefix", "state_fips", "county_fips", "region", "geography_type"}
 INFO_FIELDS = {
     "soc_code",
     "cip_code",
+    "naics_code",
     "program",
     "industry",
     "sector",
     "quarter",
+    "year",
     "cohort_year",
     "graduation_year",
+    "education_level",
+    "labor_force_status",
+    "email_domain",
     "completion_status",
     "transition_type",
     "transition_status",
@@ -150,8 +158,23 @@ def public_geography() -> pd.DataFrame:
 
 
 @st.cache_data
+def public_person_geo() -> pd.DataFrame:
+    return load_mock_csv("public_person_geo")
+
+
+@st.cache_data
 def public_onet() -> pd.DataFrame:
     return load_mock_csv("onet_skills")
+
+
+@st.cache_data
+def public_lehd() -> pd.DataFrame:
+    return load_mock_csv("lehd_public")
+
+
+@st.cache_data
+def public_cps() -> pd.DataFrame:
+    return load_mock_csv("cps_public")
 
 
 @st.cache_data
@@ -171,6 +194,11 @@ def zip_prefix(value: object) -> str:
 def birth_year(value: object) -> str:
     text = str(value)
     return text[:4] if len(text) >= 4 else ""
+
+
+def email_domain(value: object) -> str:
+    text = "" if pd.isna(value) else str(value).lower().strip()
+    return text.split("@", 1)[1] if "@" in text else ""
 
 
 def qgrams(value: object, n: int = 2) -> set[str]:
@@ -216,9 +244,77 @@ def dataset_catalog() -> dict[str, dict[str, Any]]:
         "Private employment records": {"df": private_employment(), "classification": "restricted"},
         "Private wage records": {"df": private_wage(), "classification": "restricted"},
         "Private observed transition records": {"df": private_transition(), "classification": "restricted"},
+        "Public person geography sample": {"df": public_person_geo(), "classification": "public"},
         "Public geography reference": {"df": public_geography(), "classification": "public"},
         "Public O*NET skill scores": {"df": public_onet(), "classification": "public"},
+        "Public LEHD workforce statistics": {"df": public_lehd(), "classification": "public"},
+        "Public CPS labor force sample": {"df": public_cps(), "classification": "public"},
         "Public program statistics": {"df": public_program_stats(), "classification": "public"},
+    }
+
+
+def demo_scenarios() -> dict[str, dict[str, str]]:
+    return {
+        "Public 1 - Public person geography + geography": {
+            "left": "Public person geography sample",
+            "right": "Public geography reference",
+            "route": "public / no encryption",
+        },
+        "Public 2 - LEHD + CPS": {
+            "left": "Public LEHD workforce statistics",
+            "right": "Public CPS labor force sample",
+            "route": "public / no encryption",
+        },
+        "Public 3 - Program statistics + O*NET": {
+            "left": "Public program statistics",
+            "right": "Public O*NET skill scores",
+            "route": "public / no encryption",
+        },
+        "Public 4 - LEHD + geography": {
+            "left": "Public LEHD workforce statistics",
+            "right": "Public geography reference",
+            "route": "public / no encryption",
+        },
+        "Private encrypted 1 - Education + wage": {
+            "left": "Private education records",
+            "right": "Private wage records",
+            "route": "private / encrypted PPRL",
+        },
+        "Private encrypted 2 - Person + wage": {
+            "left": "Private person records",
+            "right": "Private wage records",
+            "route": "private / encrypted PPRL",
+        },
+        "Private encrypted 3 - Education + employment": {
+            "left": "Private education records",
+            "right": "Private employment records",
+            "route": "private / encrypted PPRL",
+        },
+        "Private encrypted 4 - Person + education": {
+            "left": "Private person records",
+            "right": "Private education records",
+            "route": "private / encrypted PPRL",
+        },
+        "Mixed 1 - Education + O*NET": {
+            "left": "Private education records",
+            "right": "Public O*NET skill scores",
+            "route": "mixed private/public",
+        },
+        "Mixed 2 - Wage + LEHD": {
+            "left": "Private wage records",
+            "right": "Public LEHD workforce statistics",
+            "route": "mixed private/public",
+        },
+        "Mixed 3 - Employment + geography": {
+            "left": "Private employment records",
+            "right": "Public geography reference",
+            "route": "mixed private/public",
+        },
+        "Mixed 4 - Education + program statistics": {
+            "left": "Private education records",
+            "right": "Public program statistics",
+            "route": "mixed private/public",
+        },
     }
 
 
@@ -344,7 +440,7 @@ def ai_linkage_plan(payload: dict[str, Any], settings: LinkageSettings) -> str:
         **payload,
         "left_classification": settings.left_classification,
         "right_classification": settings.right_classification,
-        "selected_pprl_technique": settings.pprl_technique,
+        "selected_linkage_method": settings.pprl_technique,
         "privacy_rule": "Use metadata only. Do not request or infer raw PII values. Recommend privacy-safe linkage steps and outputs.",
     }
     client = OpenAI(api_key=api_key)
@@ -410,7 +506,27 @@ def dataset_summary(name: str, df: pd.DataFrame, classification: str) -> pd.Data
 
 
 def direct_public_link(left: pd.DataFrame, right: pd.DataFrame) -> pd.DataFrame:
-    keys = [key for key in ["soc_code", "cip_code", "cohort_year", "graduation_year"] if key in left.columns and key in right.columns]
+    keys = [
+        key
+        for key in [
+            "public_person_id",
+            "person_group_id",
+            "zip_prefix",
+            "county",
+            "state",
+            "state_fips",
+            "county_fips",
+            "soc_code",
+            "cip_code",
+            "naics_code",
+            "industry",
+            "year",
+            "quarter",
+            "cohort_year",
+            "graduation_year",
+        ]
+        if key in left.columns and key in right.columns
+    ]
     if not keys:
         keys = [key for key in left.columns if key in right.columns and key not in DIRECT_IDENTIFIERS]
     if not keys:
@@ -609,12 +725,33 @@ def linked_record_view(linked: pd.DataFrame) -> pd.DataFrame:
         "right_record_ref",
         "match_score",
         "match_status",
+        "public_person_id",
+        "person_group_id",
+        "state",
+        "county",
+        "zip_prefix",
         "soc_code",
         "cip_code",
+        "naics_code",
+        "year",
+        "quarter",
         "program",
         "industry",
+        "education_level",
+        "labor_force_status",
+        "public_person_count",
+        "public_jobs",
+        "public_hires",
+        "average_monthly_earnings",
+        "employment_rate",
+        "median_weekly_earnings",
+        "public_completers",
+        "public_employment_rate",
         "onet_title",
+        "technical_skill_score",
+        "digital_skill_score",
         "region",
+        "public_population",
     ]
     cols = [col for col in preferred if col in linked.columns]
     if cols:
@@ -635,9 +772,17 @@ def sidebar() -> LinkageSettings:
         dataset_names = list(catalog.keys())
 
         if data_source == "Mock datasets":
-            left_dataset = st.selectbox("Left dataset", dataset_names, index=1)
-            right_default = dataset_names.index("Public O*NET skill scores")
-            right_dataset = st.selectbox("Right dataset", dataset_names, index=right_default)
+            scenarios = demo_scenarios()
+            scenario_name = st.selectbox("Demo linkage scenario", ["Custom pair", *scenarios.keys()])
+            left_default = "Private education records"
+            right_default = "Public O*NET skill scores"
+            if scenario_name != "Custom pair":
+                scenario = scenarios[scenario_name]
+                left_default = scenario["left"]
+                right_default = scenario["right"]
+                st.caption(f"{scenario['route']}: `{left_default}` + `{right_default}`")
+            left_dataset = st.selectbox("Dataset 1", dataset_names, index=dataset_names.index(left_default))
+            right_dataset = st.selectbox("Dataset 2", dataset_names, index=dataset_names.index(right_default))
             left_classification = catalog[left_dataset]["classification"]
             right_classification = catalog[right_dataset]["classification"]
         else:
@@ -670,8 +815,10 @@ def sidebar() -> LinkageSettings:
             )
 
         pprl_technique = st.selectbox(
-            "PPRL technique",
+            "Linkage method",
             [
+                "Direct public key linkage",
+                "LLM-assisted linkage",
                 "PPRL Bloom filter / hash embeddings",
                 "PPRL salted hash + q-grams",
                 "Secure Multi-Party Computation (SMC)",
@@ -682,13 +829,15 @@ def sidebar() -> LinkageSettings:
         )
         auto_threshold = st.slider("PPRL auto-match threshold", 0.70, 0.98, 0.86, 0.01)
         review_threshold = st.slider("PPRL review threshold", 0.50, 0.90, 0.72, 0.01)
-        use_ai = st.toggle("Use AI from st.secrets", value=False)
+        llm_method_selected = pprl_technique == "LLM-assisted linkage"
+        use_ai_toggle = st.toggle("Use AI to enhance linkage", value=llm_method_selected)
+        use_ai = llm_method_selected or use_ai_toggle
         ai_model = streamlit_secret("OPENAI_MODEL", "gpt-4.1-mini")
         if use_ai:
             if streamlit_secret("OPENAI_API_KEY"):
-                st.caption(f"AI enabled with model `{ai_model}` from Streamlit secrets.")
+                st.caption(f"AI enhancement enabled with `{ai_model}` from Streamlit secrets. Only metadata is sent.")
             else:
-                st.caption("AI enabled, but `OPENAI_API_KEY` is missing from Streamlit secrets.")
+                st.caption("AI enhancement is on, but `OPENAI_API_KEY` is missing from Streamlit secrets.")
 
     return LinkageSettings(
         data_source=data_source,
@@ -721,7 +870,7 @@ def workflow_tab(settings: LinkageSettings) -> None:
     )
     st.write(f"**Selected pair:** {left_name} + {right_name}")
     st.write(f"**Data classification:** {classification}")
-    st.write(f"**Selected PPRL technique:** {settings.pprl_technique}")
+    st.write(f"**Selected linkage method:** {settings.pprl_technique}")
 
     st.subheader("Client instructions")
     instructions = pd.DataFrame(
@@ -729,7 +878,7 @@ def workflow_tab(settings: LinkageSettings) -> None:
             ["1", "Choose data source", "Use mock datasets or upload two CSV files from the sidebar."],
             ["2", "Select datasets", "Pick the left and right datasets to link."],
             ["3", "Classify data", "For uploads, mark each file as public or restricted."],
-            ["4", "Choose PPRL technique", "Bloom filter / hash embeddings is the default for restricted linkage."],
+            ["4", "Choose linkage method", "Use direct linkage for public data, LLM-assisted planning for metadata review, or PPRL for restricted linkage."],
             ["5", "Review metadata", "Open Mock Data to inspect schemas, field types, identifier flags, and row counts."],
             ["6", "Review mapping", "Open Schema Mapping to see proposed join keys and fields needing review."],
             ["7", "Save package", "Open Linkage Package to record the selected technique, outputs, and privacy controls."],
@@ -744,7 +893,7 @@ def workflow_tab(settings: LinkageSettings) -> None:
             ["1", "Ingest datasets", "Capture schema, data dictionary, ERD, row grain, and privacy classification."],
             ["2", "Classify data", "Decide public direct linkage vs. restricted PPRL/PySyft route."],
             ["3A", "Public route", "Standardize fields and link with public keys such as SOC, CIP, year, county, or program."],
-            ["3B", "Restricted route", "Create mock data, choose a PPRL technique, and run privacy-preserving matching."],
+            ["3B", "Restricted route", "Create mock data, choose a restricted linkage method, and run privacy-preserving matching."],
             ["4", "Python assistance", "Use deterministic Python heuristics on metadata to suggest linkage keys and risks."],
             ["5", "PPRL method", "For restricted data, use salted hashes, q-grams, Bloom-filter-style encodings, or hash embeddings as approved."],
             ["6", "Output release", "Release public linked tables or privacy-safe restricted outputs only."],
@@ -764,7 +913,76 @@ def workflow_tab(settings: LinkageSettings) -> None:
     st.subheader("Decision guide")
     st.dataframe(decision, hide_index=True, width="stretch")
 
-    st.subheader("PPRL methods included in the design")
+    st.subheader("Method summary")
+    st.write("Open **Instructions & Methods** for client instructions and detailed method explanations.")
+
+
+def instructions_tab(settings: LinkageSettings) -> None:
+    left_name, left, right_name, right = selected_datasets(settings)
+    classification = classify_pair(left_name, right_name, settings.left_classification, settings.right_classification)
+
+    st.header("Instructions & Methods")
+    st.markdown(
+        """
+        <div class="callout">
+        Use this tab as the client guide. Public data can be linked directly with shared keys. Restricted private
+        data should use approved PPRL methods. AI is optional and only enhances metadata review and key selection.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("Current selection")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Left dataset", left_name],
+                ["Right dataset", right_name],
+                ["Classification", classification],
+                ["Linkage method", settings.pprl_technique],
+                ["AI enhancement", "On - metadata only" if settings.use_ai else "Off"],
+            ],
+            columns=["Item", "Value"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+
+    st.subheader("Client instructions")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["1", "Choose a scenario", "Use a 4/4/4 built-in scenario or select Custom pair."],
+                ["2", "Upload client CSVs", "For client files, choose Upload CSVs and classify each file as public or restricted."],
+                ["3", "Review metadata", "Check row counts, columns, direct identifier flags, geo fields, and info fields."],
+                ["4", "Choose linkage method", "Use direct public keys for public data; use PPRL for restricted data."],
+                ["5", "Optionally enable AI", "AI can suggest keys and risks from metadata only; it should not receive raw private rows or PII."],
+                ["6", "Save package", "Record datasets, purpose, requested outputs, selected technique, and privacy controls."],
+                ["7", "Run linkage", "Review linked cross-reference output and aggregate summaries."],
+                ["8", "Release safely", "Public outputs may be exported directly; restricted outputs should stay pseudonymized/aggregate."],
+            ],
+            columns=["Step", "Instruction", "Client note"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+
+    st.subheader("Public methods - no encryption")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Direct geo linkage", "Joins public records on fields like state, county, ZIP prefix, region, or FIPS.", "Public geography, LEHD, CPS, program area comparisons."],
+                ["Direct person/group linkage", "Joins on public or already-approved IDs such as public_person_id or person_group_id.", "Non-restricted public person/group summaries."],
+                ["Direct occupation/program linkage", "Joins on SOC, CIP, NAICS, program, industry, year, or quarter.", "O*NET, LEHD, CPS, credential, and workforce summaries."],
+                ["Uploaded public CSV linkage", "Client uploads any two public CSVs and marks both as public.", "The app chooses shared non-PII keys and creates linked output."],
+            ],
+            columns=["Method", "What it does", "Best fit"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+
+    st.subheader("Restricted PPRL methods")
     st.markdown(
         """
         <div class="callout">
@@ -776,8 +994,9 @@ def workflow_tab(settings: LinkageSettings) -> None:
         unsafe_allow_html=True,
     )
     methods = pd.DataFrame(
-        [
-            ["Salted hashes", "Exact or near-exact encoded comparisons for stable identifiers.", "Useful for IDs, DOB, ZIP prefixes, and controlled blocking fields."],
+            [
+                ["LLM-assisted linkage", "Uses an LLM to review metadata and recommend keys, blocking fields, risks, and outputs.", "Useful for unfamiliar schemas; raw private rows and PII should not be sent."],
+                ["Salted hashes", "Exact or near-exact encoded comparisons for stable identifiers.", "Useful for IDs, DOB, ZIP prefixes, and controlled blocking fields."],
             ["Q-gram similarity", "Fuzzy comparison over tokenized names and addresses.", "Useful for typos, spelling variants, and abbreviations."],
             ["Bloom filter encoding", "Converts sensitive attributes into cryptographic hashed bit-arrays.", "Default PPRL technique for similarity scoring without exposing original text."],
             ["Hash embeddings", "Embedding extension of Bloom-filter linkage that can learn associations from matched examples.", "Useful when training data and assurance are available."],
@@ -789,6 +1008,37 @@ def workflow_tab(settings: LinkageSettings) -> None:
         columns=["Method", "What it does", "Where it fits"],
     )
     st.dataframe(methods, hide_index=True, width="stretch")
+
+    st.subheader("Mixed private/public methods")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Private-to-public key linkage", "Restricted rows are linked to public reference data using SOC, CIP, ZIP prefix, county, state, year, or quarter.", "Education + O*NET, wage + LEHD, employment + geography."],
+                ["Pseudonymous private references", "Private record IDs are transformed before release while public fields remain readable.", "Mixed outputs where the researcher needs a cross-reference but not raw private IDs."],
+                ["Aggregate release", "The output is summarized as counts, rates, scores, medians, or distributions.", "Dashboards, trend reporting, wage summaries, and public comparison outputs."],
+                ["Owner review", "For sensitive mixed outputs, the data owner reviews linkage results before release.", "Any private/public result with re-identification or small-cell risk."],
+            ],
+            columns=["Method", "What it does", "Best fit"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
+
+    st.subheader("AI enhancement option")
+    st.dataframe(
+        pd.DataFrame(
+            [
+                ["Purpose", "AI reviews metadata and suggests linkage keys, blocking fields, privacy risks, and release outputs."],
+                ["Inputs", "Dataset names, classifications, column names, data types, and field roles only."],
+                ["Not allowed", "Do not send raw restricted rows, names, DOB, phone, email, address, SSN, or student IDs to AI."],
+                ["Execution", "Python performs linkage locally after AI suggests a metadata plan."],
+                ["When useful", "Messy schemas, unfamiliar client CSVs, unclear geo/info keys, or mixed public/private linkage planning."],
+            ],
+            columns=["Area", "Guidance"],
+        ),
+        hide_index=True,
+        width="stretch",
+    )
 
 
 def data_tab(settings: LinkageSettings) -> None:
@@ -857,7 +1107,7 @@ def schema_mapping_tab(settings: LinkageSettings) -> None:
 
     st.subheader("AI geo/info linkage plan")
     if not settings.use_ai:
-        st.info("Turn on `Use AI from st.secrets` in the sidebar to generate an AI-assisted geo/info metadata plan.")
+        st.info("Turn on `Use AI to enhance linkage` in the sidebar to generate a metadata-only AI linkage plan.")
     else:
         if st.button("Generate AI geo/info plan", type="primary"):
             st.session_state.ai_suggestion = ai_linkage_plan(payload, settings)
@@ -883,7 +1133,7 @@ def submit_tab(settings: LinkageSettings) -> None:
         "dataset_source": settings.data_source,
         "dataset_pair": f"{left_name} + {right_name}",
         "classification": classification,
-        "pprl_technique": settings.pprl_technique,
+        "linkage_method": settings.pprl_technique,
         "geo_fields": {
             "left": linkage_feature_summary(left)["geographic_fields"],
             "right": linkage_feature_summary(right)["geographic_fields"],
@@ -938,9 +1188,13 @@ def main() -> None:
     st.title("State Dataset Linkage Tool")
     st.caption("Mock-data app for public direct linkage, private/public linkage, and restricted PPRL-style matching.")
 
-    workflow, data, mapping, submit, results = st.tabs(["Flow", "Mock Data", "Geo / Info Mapping", "Linkage Package", "Results"])
+    workflow, instructions, data, mapping, submit, results = st.tabs(
+        ["Flow", "Instructions & Methods", "Mock Data", "Geo / Info Mapping", "Linkage Package", "Results"]
+    )
     with workflow:
         workflow_tab(settings)
+    with instructions:
+        instructions_tab(settings)
     with data:
         data_tab(settings)
     with mapping:
